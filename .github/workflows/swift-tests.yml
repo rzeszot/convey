@@ -42,3 +42,40 @@ jobs:
           path: |
             artifacts
           if-no-files-found: ignore
+
+
+  ui-tests:
+    name: UI tests
+    runs-on: macos-15
+    timeout-minutes: 10
+    concurrency:
+      group: ci-${{ github.workflow }}-${{ github.ref || github.head_ref }}-ui
+      cancel-in-progress: true
+    env:
+      SCHEME: Example
+      DESTINATION: platform=iOS Simulator,name=iPhone 16 Pro,OS=18.6
+      RESULT_BUNDLE: Example.xcresult
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+      - name: Run UI tests
+        run: |
+          set -o pipefail
+          cd Example
+          xcodebuild \
+            -scheme "$SCHEME" \
+            -destination "$DESTINATION" \
+            -resultBundlePath "../artifacts/$RESULT_BUNDLE" \
+            -enableCodeCoverage YES \
+            clean build test \
+            | xcpretty
+          cd ..
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: UI Tests
+          path: |
+            artifacts
+          if-no-files-found: ignore
+
